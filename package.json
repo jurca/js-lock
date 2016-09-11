@@ -1,0 +1,32 @@
+{
+  "name": "js-lock",
+  "version": "0.1.0",
+  "description": "Object-oriented synchronization lock API for ES2017",
+  "main": "Lock.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jurca/js-lock.git"
+  },
+  "keywords": [
+    "es2017",
+    "async",
+    "lock"
+  ],
+  "author": "Martin Jurča <mjurca@centrum.cz>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jurca/js-lock/issues"
+  },
+  "publishConfig": {
+    "registry": "http://registry.npmjs.org/"
+  },
+  "homepage": "https://github.com/jurca/js-lock#readme",
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
+  }
+}
