@@ -10,9 +10,9 @@ export default class TimeoutError extends Error {
    * @param {string=} message The message that describes the cause of the
    *        error.
    */
-  constructor(message = "") {
+  constructor(message = '') {
     super(message)
 
-    this.name = "TimeoutError"
+    this.name = 'TimeoutError'
   }
 }
