@@ -123,10 +123,18 @@ export default class Lock {
         this[PRIVATE.taskTriggerQueue].push(resolve)
 
         if (timeout) {
-          setTimeout(() => reject(new TimeoutError(
-            `The provided task did not acquire the ${this.name} lock within ` +
-            `the specified timeout of ${timeout} milliseconds`
-          )), timeout)
+          setTimeout(() => {
+            let triggerIndex = this[PRIVATE.taskTriggerQueue].indexOf(resolve)
+            if (triggerIndex === -1) {
+              return // the task has been already started
+            }
+
+            this[PRIVATE.taskTriggerQueue].splice(triggerIndex, 1)
+            reject(new TimeoutError(
+              `The provided task did not acquire the ${this.name} lock ` +
+              `within the specified timeout of ${timeout} milliseconds`
+            ))
+          }, timeout)
         }
       })
     } else {
@@ -191,6 +199,12 @@ export default class Lock {
         `provided`
       )
     }
+    if (timeout < 0) {
+      throw new RangeError(
+          `The timeout has to be a non-negative integer, ${timeout} has been ` +
+          `provided`
+      )
+    }
     if (!locks.length) {
       throw new RangeError('The array of locks cannot be empty')
     }
@@ -198,12 +212,6 @@ export default class Lock {
       throw new Error(
         'The names of the locks to acquire must be unique to ensure a ' +
         'deadlock would not occur'
-      )
-    }
-    if (timeout < 0) {
-      throw new RangeError(
-        `The timeout has to be a non-negative integer, ${timeout} has been ` +
-        `provided`
       )
     }
 
