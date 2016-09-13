@@ -151,7 +151,45 @@ describe('Lock', () => {
     done()
   })
 
+  describe('all', () => {
+
+    it('should reject non-array locks sequence', async (done) => {
+      let locks = {
+        0: lock,
+        length: 1
+      }
+      try {
+        await Lock.all(locks, () => {})
+        fail()
+      } catch (error) {
+        expect(error instanceof TypeError).toBe(true)
+      }
+      done()
+    })
+
+    it('should reject locks array containing a non-lock', async (done) => {
+      let locks = [lock, {}]
+      try {
+        await Lock.all(locks, () => {})
+      } catch (error) {
+        expect(error instanceof TypeError).toBe(true)
+      }
+      done()
+    })
+
+    it('should reject a task that is not a function', async (done) => {
+      try {
+        await Lock.all([lock], [])
+      } catch (error) {
+        expect(error instanceof TypeError).toBe(true)
+      }
+      done()
+    })
+
+  })
+
   afterEach(() => {
+    // this also checks that timed out tasks wont block the lock
     expect(lock.isLocked).toBe(false)
   })
 
