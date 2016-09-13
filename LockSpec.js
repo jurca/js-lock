@@ -98,13 +98,21 @@ describe('Lock', () => {
     done()
   })
 
-  xit('should reject after waiting longer than timeout', async (done) => {
-    // TODO
+  it('should reject after waiting longer than timeout', async (done) => {
+    lock.lock(() => new Promise(resolve => setTimeout(resolve, 100)))
+    try {
+      await lock.lock(() => {}, 10)
+      fail()
+    } catch (error) {
+      expect(error instanceof TimeoutError).toBe(true)
+    }
     done()
   })
 
-  xit('should execute the task once', async (done) => {
-    // TODO
+  it('should execute the task once', async (done) => {
+    let executionCounter = 0
+    await lock.lock(() => executionCounter++)
+    expect(executionCounter).toBe(1)
     done()
   })
 
