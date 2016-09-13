@@ -151,6 +151,19 @@ describe('Lock', () => {
     done()
   })
 
+  it('should release the lock if the task fails with error', async (done) => {
+    try {
+      await lock.lock(() => {
+        expect(lock.isLocked).toBe(true)
+        throw new EvalError('Testing')
+      })
+    } catch (error) {
+      expect(error instanceof EvalError).toBe(true)
+      expect(lock.isLocked).toBe(false)
+    }
+    done()
+  })
+
   describe('all', () => {
 
     it('should reject non-array locks sequence', async (done) => {
@@ -171,6 +184,7 @@ describe('Lock', () => {
       let locks = [lock, {}]
       try {
         await Lock.all(locks, () => {})
+        fail()
       } catch (error) {
         expect(error instanceof TypeError).toBe(true)
       }
@@ -180,9 +194,65 @@ describe('Lock', () => {
     it('should reject a task that is not a function', async (done) => {
       try {
         await Lock.all([lock], [])
+        fail()
       } catch (error) {
         expect(error instanceof TypeError).toBe(true)
       }
+      done()
+    })
+
+    it('should reject non-integer or negative timeouts', async (done) => {
+      let locks = [lock]
+      let invalidTimeouts = [null, true, '', 1.2, {}, []]
+      for (let invalidTimeout of invalidTimeouts) {
+        try {
+          await Lock.all(locks, () => {}, invalidTimeout)
+          fail()
+        } catch (error) {
+          expect(error instanceof TypeError).toBe(true)
+        }
+      }
+
+      try {
+        await Lock.all(locks, () => {}, -1)
+        fail()
+      } catch (error) {
+        expect(error instanceof RangeError).toBe(true)
+      }
+
+      done()
+    })
+
+    it('should reject empty locks array', async (done) => {
+      try {
+        await Lock.all([], () => {})
+        fail()
+      } catch (error) {
+        expect(error instanceof RangeError).toBe(true)
+      }
+      done()
+    })
+
+    it('should reject locks with non-unique names', async (done) => {
+      let locks = [new Lock('a'), new Lock('a')]
+      try {
+        await Lock.all(locks, () => {})
+        fail()
+      } catch (error) {
+        expect(error instanceof Error).toBe(true)
+      }
+      done()
+    })
+
+    it('should acquire all locks before executing the task', async (done) => {
+      let locks = [new Lock(), new Lock(), new Lock()]
+      let executed = false
+      await Lock.all(locks, () => {
+        executed = true
+        expect(locks.every(lock => lock.isLocked)).toBe(true)
+      })
+      expect(executed).toBe(true)
+      expect(locks.every(lock => !lock.isLocked)).toBe(true)
       done()
     })
 
