@@ -99,13 +99,17 @@ describe('Lock', () => {
   })
 
   it('should reject after waiting longer than timeout', async (done) => {
-    lock.lock(() => new Promise(resolve => setTimeout(resolve, 100)))
+    let firstTaskPromise = lock.lock(
+      () => new Promise(resolve => setTimeout(resolve, 100))
+    )
     try {
       await lock.lock(() => {}, 10)
       fail()
     } catch (error) {
       expect(error instanceof TimeoutError).toBe(true)
     }
+    expect(lock.isLocked).toBe(true)
+    await firstTaskPromise
     done()
   })
 
@@ -114,6 +118,41 @@ describe('Lock', () => {
     await lock.lock(() => executionCounter++)
     expect(executionCounter).toBe(1)
     done()
+  })
+
+  it('should preserve the order of the tasks', async (done) => {
+    let executedTasks = []
+    lock.lock(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          executedTasks.push('a')
+          resolve()
+        }, 10)
+      })
+    })
+    lock.lock(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          executedTasks.push('b')
+          resolve()
+        }, 20)
+      })
+    })
+    await lock.lock(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          executedTasks.push('c')
+          resolve()
+        }, 5)
+      })
+    })
+
+    expect(executedTasks).toEqual(['a', 'b', 'c'])
+    done()
+  })
+
+  afterEach(() => {
+    expect(lock.isLocked).toBe(false)
   })
 
 })
