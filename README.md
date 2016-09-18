@@ -22,8 +22,11 @@ lock.isLocked // false
 // to acquire the lock in such time, the lock method would throw a
 // TimeoutError.
 await lock.lock(async () => {
+  lock.isLocked // true
   // ...
 }, 10000)
+
+lock.isLocked // false
 
 let otherLock = new Lock()
 
